@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import json
 from pprint import pprint
 from pymongo import MongoClient
-
+import logging 
 
 dotCode = ['dotCodeRecord_2016_10_1.json', 'dotCodeRecord_2016_11_1.json', 'dotCodeRecord_2016_11_2.json', 'dotCodeRecord_2016_11_3.json', 'dotCodeRecord_2016_12_1.json',\
             'dotCodeRecord_2016_12_2.json', 'dotCodeRecord_2017_10_1.json', 'dotCodeRecord_2017_10_2.json', 'dotCodeRecord_2017_10_3.json', 'dotCodeRecord_2017_10_4.json',\
@@ -37,7 +38,7 @@ def countAllVocabulary():
 
 dataset = []
 def loadVocabularyToMemory():
-    for i in range(len(vocabulary)):
+    for i in range(2):
         directory = 'english/' + vocabulary[i]
         doc = open(directory, 'r', encoding='UTF-8')
         
@@ -45,7 +46,9 @@ def loadVocabularyToMemory():
             data = json.loads(line)
             data = str(data).replace('$','')
             dataset.append(data)
+            
         print("i == " + str(i))
+        
 
 def loadDotCodeToMemory():
     for i in range(len(dotCode)):
@@ -55,22 +58,25 @@ def loadDotCodeToMemory():
         for line in doc.readlines():
             data.append(json.loads(line))
     
-personDataset = {}
-def vocCountArrangeSamePerson():
+personInfoDataset = {}
+personIdDataset = []
+def vocCountArrangeEachPerson():
     for i in range(len(dataset)):
         preData = {}
-        voc = dataset[i]['_id']['vocabulary']
-        preData.update( {"total" : dataset[i]['total']} )
-        preData.update( {"rate" : dataset[i]['rate']} )
+        datasetDict = eval(dataset[i])
+        voc = datasetDict['_id']['vocabulary']
+        preData.update( {"total" : datasetDict['total']} )
+        preData.update( {"correct" : datasetDict['correct']} )
         
         data = {voc : preData}
-        if dataset[i]['_id']['userId'] in personDataset.keys():
-            personDataset['userId'].update(data)
+        if datasetDict['_id']['userId'] in personInfoDataset.keys():
+            personInfoDataset[datasetDict['_id']['userId']].update(data)
         else:
-            personDataset.update( {dataset[i]['_id']['userId'] : data} )
+            personInfoDataset.update( {datasetDict['_id']['userId'] : data} )
+            personIdDataset.append(datasetDict['_id']['userId'])
     
-    print(personDataset)
-
+    #print(personInfoDataset[24643])
+    
 # TODO Finish the ranking difficulty func
 """
 def difficultyDetect(volcabulary):
@@ -84,7 +90,7 @@ def difficultyDetect(volcabulary):
 
 def main():
     loadVocabularyToMemory()
-    vocCountArrangeSamePerson()
+    vocCountArrangeEachPerson()
     #loadDotCodeToMemory()
 
     
