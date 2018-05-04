@@ -17,8 +17,6 @@ client = MongoClient('localhost', 27017)
 db = client['steelGrade']
 collection = db['vocCount']
 
-
-
 def countAllVocabulary():
     dic = []
     for i in range(vocabulary):
@@ -45,6 +43,7 @@ def loadVocabularyToMemory():
         for line in doc.readlines():
             data = json.loads(line)
             data = str(data).replace('$','')
+            #print("data = " + data)
             dataset.append(data)
             
         print("i == " + str(i))
@@ -67,7 +66,7 @@ def vocCountArrangeEachPerson():
         voc = datasetDict['_id']['vocabulary']
         preData.update( {"total" : datasetDict['total']} )
         preData.update( {"correct" : datasetDict['correct']} )
-        
+        preData.update( {"numberLong" : datasetDict['lastModified']['numberLong']} )
         data = {voc : preData}
         if datasetDict['_id']['userId'] in personInfoDataset.keys():
             personInfoDataset[datasetDict['_id']['userId']].update(data)
@@ -76,7 +75,33 @@ def vocCountArrangeEachPerson():
             personIdDataset.append(datasetDict['_id']['userId'])
     
     #print(personInfoDataset[24643])
+
+personInfoDatasetInOrder = []
+def vocCountArrangeEachPersonInTimeSeries():
     
+    personIdDataset.sort()
+    for personIndex in range(len(personIdDataset)):
+        numberLongList = []
+        info = personInfoDataset[personIdDataset[personIndex]] 
+        
+        for key in info.keys():
+            numberLongList.append(info[key]['numberLong'])
+        
+        numberLongList.sort()
+        
+        personInfoDatasetInOrderTemp = []
+
+        for i in range(len(numberLongList)):
+            for key in info.keys():
+                if info[key]['numberLong'] == numberLongList[i]:
+                    personInfoDatasetInOrderTemp.append({key : info[key]})
+                    del info[key]
+                    break
+        personInfoDatasetInOrder.append(personIndex)
+        personInfoDatasetInOrder.append(personInfoDatasetInOrderTemp)        
+
+
+
 # TODO Finish the ranking difficulty func
 """
 def difficultyDetect(volcabulary):
@@ -91,6 +116,7 @@ def difficultyDetect(volcabulary):
 def main():
     loadVocabularyToMemory()
     vocCountArrangeEachPerson()
+    vocCountArrangeEachPersonInTimeSeries()
     #loadDotCodeToMemory()
 
     
