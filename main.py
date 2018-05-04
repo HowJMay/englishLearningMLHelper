@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
+
 import json
 from pprint import pprint
 from pymongo import MongoClient
 import logging 
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
 
 dotCode = ['dotCodeRecord_2016_10_1.json', 'dotCodeRecord_2016_11_1.json', 'dotCodeRecord_2016_11_2.json', 'dotCodeRecord_2016_11_3.json', 'dotCodeRecord_2016_12_1.json',\
             'dotCodeRecord_2016_12_2.json', 'dotCodeRecord_2017_10_1.json', 'dotCodeRecord_2017_10_2.json', 'dotCodeRecord_2017_10_3.json', 'dotCodeRecord_2017_10_4.json',\
@@ -36,7 +42,7 @@ def countAllVocabulary():
 
 dataset = []
 def loadVocabularyToMemory():
-    for i in range(2):
+    for i in range(len(vocabulary)):
         directory = 'english/' + vocabulary[i]
         doc = open(directory, 'r', encoding='UTF-8')
         
@@ -99,8 +105,54 @@ def vocCountArrangeEachPersonInTimeSeries():
                     break
         personInfoDatasetInOrder.append(personIndex)
         personInfoDatasetInOrder.append(personInfoDatasetInOrderTemp)        
+    print("personIndex = " + str(personIndex))
+    preprocessRersonInfoDatasetInOrderForLinearRegression()
 
+def preprocessRersonInfoDatasetInOrderForLinearRegression():
+    
+    for personIndex in range(0, len(personInfoDatasetInOrder), 2):
+        ID = personInfoDatasetInOrder[personIndex]
+        vocList = personInfoDatasetInOrder[personIndex + 1]
+        
+        numberLong = []
+        rate = []
+        for i in range(len(vocList)):
+            dic = vocList[i]
+            for key, value in dic.items():
+                break
+            numberLong.append(int(value['numberLong']))
+            rate.append(int(value['correct'])/int(value['total']))
 
+        doLinearRegression(numberLong, rate)
+    
+    # save as txt
+    f = open('LinearRegressionResult.txt', 'w', encoding = 'UTF-8')
+    f.write(lmCoef)
+    
+lmCoef = []
+def doLinearRegression(xList, yList):
+    x = np.asarray(xList)
+    y = np.asarray(yList)
+    
+    xReshape = np.reshape(x, (len(x), 1))
+    yReshape = np.reshape(y, (len(y), 1)) 
+
+    lm = LinearRegression()
+    lm.fit(xReshape, yReshape)
+    
+    print(lm.coef_)
+    lmCoef.append(lm.coef_)
+    print(lm.intercept_)
+
+    
+    """
+    # visualizing the data
+    plt.scatter(x, y, color='black')
+    plt.plot(x, lm.predict(xReshape), color = 'blue', linewidth = 3)
+    plt.xticks(())
+    plt.yticks(())
+    plt.show()
+    """    
 
 # TODO Finish the ranking difficulty func
 """
@@ -114,9 +166,12 @@ def difficultyDetect(volcabulary):
 """
 
 def main():
+    logging.basicConfig(level = logging.INFO)
+    
     loadVocabularyToMemory()
     vocCountArrangeEachPerson()
     vocCountArrangeEachPersonInTimeSeries()
+    
     #loadDotCodeToMemory()
 
     
