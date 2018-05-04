@@ -128,6 +128,7 @@ def preprocessRersonInfoDatasetInOrderForLinearRegression():
     # save as txt
     f = open('LinearRegressionResult.txt', 'w', encoding = 'UTF-8')
     f.write(lmCoef)
+    f.close()
     
 lmCoef = []
 def doLinearRegression(xList, yList):
