@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import json
 from pprint import pprint
 from pymongo import MongoClient
@@ -7,6 +6,8 @@ import logging
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
+import crawl
+
 plt.switch_backend('agg')
 
 
@@ -169,6 +170,9 @@ def difficultyDetect(volcabulary):
 def main():
     logging.basicConfig(level = logging.INFO)
     
+    
+    vocDict = crawl.main()
+
     loadVocabularyToMemory()
     vocCountArrangeEachPerson()
     vocCountArrangeEachPersonInTimeSeries()

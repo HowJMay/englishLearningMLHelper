@@ -1,8 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 
-
-
 vocDictKK = {}
 
 def importVoc():
@@ -40,20 +38,22 @@ def parseHTMLForKK(text):
     resKK = resKK.replace(']', '')
     resKK = resKK.replace('KK', '')
 
-    
+
     return resKK
 
 def getKKforEachVoc(vocList):
-    for i in range(len(vocList)):
+    #for i in range(len(vocList)):
+    for i in range(10):
         text = getHtml(vocList[i])
         KK = parseHTMLForKK(text)
         vocDictKK.update({vocList[i] : KK})
-
+    
 def main():
+    
     vocList = importVoc()
     getKKforEachVoc(vocList)
 
-    print(vocDictKK)
+    return vocDictKK
 main()
 
 
