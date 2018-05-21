@@ -15,6 +15,7 @@ def importVoc():
     vocStr = vocStr.replace('\'', '')
     vocStr = vocStr.replace('[', '')
     vocStr = vocStr.replace(']', '')
+    vocStr = vocStr.replace(' ', '')
     vocList = vocStr.split(',')
     
     return vocList
@@ -37,13 +38,12 @@ def parseHTMLForKK(text):
     resKK = resKK.replace('[', '')
     resKK = resKK.replace(']', '')
     resKK = resKK.replace('KK', '')
-
+    resKK = resKK.replace(' ', '')
 
     return resKK
 
 def getKKforEachVoc(vocList):
-    #for i in range(len(vocList)):
-    for i in range(10):
+    for i in range(len(vocList)):
         text = getHtml(vocList[i])
         KK = parseHTMLForKK(text)
         vocDictKK.update({vocList[i] : KK})
@@ -54,6 +54,4 @@ def main():
     getKKforEachVoc(vocList)
 
     return vocDictKK
-main()
-
 

@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import crawl
+import pickle
 
 plt.switch_backend('agg')
 
@@ -22,7 +23,7 @@ for i in range(27):
 
 client = MongoClient('localhost', 27017)
 db = client['steelGrade']
-collection = db['vocCount']
+
 
 def countAllVocabulary():
     dic = []
@@ -41,8 +42,9 @@ def countAllVocabulary():
     f.close()
     print(str(dic))
 
-dataset = []
+
 def loadVocabularyToMemory():
+    dataset = []
     for i in range(len(vocabulary)):
         directory = 'english/' + vocabulary[i]
         doc = open(directory, 'r', encoding='UTF-8')
@@ -54,7 +56,7 @@ def loadVocabularyToMemory():
             dataset.append(data)
             
         print("i == " + str(i))
-        
+    return dataset
 
 def loadDotCodeToMemory():
     for i in range(len(dotCode)):
@@ -64,9 +66,11 @@ def loadDotCodeToMemory():
         for line in doc.readlines():
             data.append(json.loads(line))
     
-personInfoDataset = {}
-personIdDataset = []
-def vocCountArrangeEachPerson():
+
+def vocCountArrangeEachPerson(dataset):
+    personInfoDataset = {}
+    personIdDataset = []
+    collection = db['personVocCount']
     for i in range(len(dataset)):
         preData = {}
         datasetDict = eval(dataset[i])
@@ -81,16 +85,17 @@ def vocCountArrangeEachPerson():
             personInfoDataset.update( {datasetDict['_id']['userId'] : data} )
             personIdDataset.append(datasetDict['_id']['userId'])
     
-    #print(personInfoDataset[24643])
+    with open('vocCountArrangeEachPerson.txt', 'wb') as fp:
+        pickle.dump(personInfoDataset, fp)
+    return personInfoDataset, personIdDataset
 
-personInfoDatasetInOrder = []
-def vocCountArrangeEachPersonInTimeSeries():
-    
+def vocCountArrangeEachPersonInTimeSeries(personInfoDataset, personIdDataset):
+    personInfoDatasetInOrder = []    
     personIdDataset.sort()
     for personIndex in range(len(personIdDataset)):
         numberLongList = []
         info = personInfoDataset[personIdDataset[personIndex]] 
-        
+
         for key in info.keys():
             numberLongList.append(info[key]['numberLong'])
         
@@ -107,9 +112,24 @@ def vocCountArrangeEachPersonInTimeSeries():
         personInfoDatasetInOrder.append(personIndex)
         personInfoDatasetInOrder.append(personInfoDatasetInOrderTemp)        
     print("personIndex = " + str(personIndex))
-    preprocessRersonInfoDatasetInOrderForLinearRegression()
+    # try to empty the memory
+    del personIdDataset
+    del personInfoDataset
 
-def preprocessRersonInfoDatasetInOrderForLinearRegression():
+    delta = len(personInfoDatasetInOrder)/10 
+    for i in range(11):
+        fileName = 'personInfoDatasetInOrder' + str(i) + '.txt'
+        with open(fileName, 'wb') as fp:
+            personInfoDatasetInOrderForPickle = []
+            for j in range(i*delta, (i + 1)*delta):
+                if j < len(personInfoDatasetInOrder):
+                    personInfoDatasetInOrderForPickle.append(personInfoDatasetInOrder[j])
+            pickle.dump(personInfoDatasetInOrderForPickle, fp)
+    
+
+    preprocessRersonInfoDatasetInOrderForLinearRegression(personInfoDatasetInOrder)
+
+def preprocessRersonInfoDatasetInOrderForLinearRegression(personInfoDatasetInOrder):
     
     for personIndex in range(0, len(personInfoDatasetInOrder), 2):
         ID = personInfoDatasetInOrder[personIndex]
@@ -157,26 +177,39 @@ def doLinearRegression(xList, yList):
     """    
 
 # TODO Finish the ranking difficulty func
-"""
+
 def difficultyDetect(volcabulary):
     length = len(volcabulary)
-    # KKphoneticNum: the num of KK phonetic 
+    # KKphoneticNum: the ratio between the length of the word and the number og KK phonetic 
     # which level the volcabulary in GEPT
-    dificulty = (length * 0.7 + KKphoneticNum * 0.3) / 100 * GEPTLevel
+    
+    # this is the first level of GEPT
+    GEPTLevel = 1
+
+    length = len(vocabulary)
+    LenKKphoneticRatio = len(vocDictKK[vocabulary])
+        
+    dificulty = (length * 0.7 + LenKKphoneticRatio * 0.3) / 100 * GEPTLevel
 
     return dificulty
-"""
+vocDictDifficulty = {}
+def examDifficultyForAllVoc():
+    for key in vocDictKK:
+        vocDictDifficulty.update({key : difficultyDetect(key)})
 
+    print(vocDictDifficulty)
+vocDictKK = {}
 def main():
     logging.basicConfig(level = logging.INFO)
-    
-    
-    vocDict = crawl.main()
+    global vocDictKK
+    vocDictKK = crawl.main()
 
-    loadVocabularyToMemory()
-    vocCountArrangeEachPerson()
-    vocCountArrangeEachPersonInTimeSeries()
+    dataset = loadVocabularyToMemory()
+    personInfoDataset, personIdDataset = vocCountArrangeEachPerson(dataset)
+    vocCountArrangeEachPersonInTimeSeries(personInfoDataset, personIdDataset)
     
+    examDifficultyForAllVoc()
+
     #loadDotCodeToMemory()
 
     
