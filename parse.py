@@ -1,8 +1,10 @@
 import numpy as np
 import sklearn.linear_model as LinearRegressionResult
 import math
+import pickle
+import bestWay
 
-def loadTxt():
+def loadTxtCalculationFactor():
     f = open('LinearRegressionResult.txt', 'r', encoding = 'UTF-8')
 
     text = ''
@@ -24,13 +26,13 @@ def loadTxt():
     textList = text.split(',')
     return textList
 
-def saveTxt(text):
+def saveTxtCalculationFactor(text):
     f = open("LRResult.txt", 'w', encoding = 'UTF-8')
     f.write(str(text))
 
 numTextList = []
 absTextList = []
-def calculation(textList):
+def calculationFactor(textList):
     for i in range(len(textList)):
         preNum = textList[i].split('e')
         
@@ -45,9 +47,9 @@ def calculation(textList):
         num = float(base) * pow(10, int(power))
         numTextList.append(num) 
         absTextList.append(abs(numTextList[i]))
-def main():
-    textList = loadTxt()
-    calculation(textList)
+def calculationFactorProcess():
+    textList = loadTxtCalculationFactor()
+    calculationFactor(textList)
     print('max = ' + str(max(numTextList)))
     print('min = ' + str(min(numTextList)))
     print('abs max = ' + str(max(absTextList)))
@@ -56,6 +58,74 @@ def main():
     print('abs mean = ' + str(np.mean(np.asarray(absTextList))))
     print('std = ' + str(np.std(np.asarray(numTextList))))
     print('abs std = ' + str(np.std(np.asarray(absTextList))))
-    saveTxt(textList)
+    saveTxtCalculationFactor(textList)
+
+def loadTxtBestWay():
+    for i in range(11):
+        fileName = 'personInfoDatasetInOrder' + str(i) + '.txt'
+        with open(fileName, 'rb') as f:
+            text = pickle.load(f)
+    return text
+
+def arrangePersonInfoList(textList):
+    personInfoList = []
+    for i in range(1, len(textList), 2):
+        personInfoList.append(textList[i/2])
+
+    return personInfoList
+    
+def learningSlopeCal(personInfoList):
+    learningSlopeDict = {}
+
+    for personIndex in range(len(personInfoList)):
+        personVocHist = personInfoList[personIndex]
+        for vocIndex in range(0, len(personVocHist), 2):
+            
+            formerVocAsDict = personVocHist[vocIndex]
+            latterVocAsDict = personVocHist[vocIndex + 1]
+            
+            formerKey = next(iter(formerVocAsDict))
+            latterKey = next(iter(latterVocAsDict))
+
+            formerValue = formerVocAsDict[formerKey]
+            latterValue = latterVocAsDict[latterKey]
+
+            if not formerKey in learningSlopeDict.keys(): 
+                # the former key didnt exist in the dict
+                slope = int(latterValue['correct']) /int(latterValue['total'])  - int(formerValue['correct']) /int(formerValue['total']) 
+
+                valueDict = {latterKey : {'slope' : slope} }
+                learningSlopeChildDict = {formerKey : valueDict}
+                learningSlopeDict.update(learningSlopeChildDict)
+            elif not latterKey in learningSlopeDict[formerKey].keys(): 
+                # the former key exists in the dict but latter key didnt exist in the dict
+                slope = int(latterValue['correct']) /int(latterValue['total'])  - int(formerValue['correct']) /int(formerValue['total']) 
+
+                valueDict = {latterKey : {'slope' : slope} }
+                learningSlopeDict[formerKey].update(valueDict)
+            else:
+                # both former and latter key didnt exist in the dict
+                preSlope = learningSlopeDict[formerKey].pop(latterKey)
+                curSlope = int(latterValue['correct']) /int(latterValue['total'])  - int(formerValue['correct']) /int(formerValue['total']) 
+
+                slope = (preSlope + curSlope) / 2
+                valueDict = {latterKey : {'slope' : slope} }
+                learningSlopeDict[formerKey].update(valueDict)
+    return learningSlopeDict   
+
+
+
+def calculationBestWayProcess():
+    text = loadTxtBestWay()
+    personInfoList = arrangePersonInfoList(text)
+
+    learningSlopeDict = learningSlopeCal(personInfoList)
+    bestWay.bestWay_Alorithm(learningSlopeDict)
+
+def main():
+    calculationFactorProcess()
+
+
+
 
 main()

@@ -52,7 +52,6 @@ def loadVocabularyToMemory():
         for line in doc.readlines():
             data = json.loads(line)
             data = str(data).replace('$','')
-            #print("data = " + data)
             dataset.append(data)
             
         print("i == " + str(i))
@@ -166,15 +165,6 @@ def doLinearRegression(xList, yList):
     lmCoef.append(lm.coef_)
     print(lm.intercept_)
 
-    
-    """
-    # visualizing the data
-    plt.scatter(x, y, color='black')
-    plt.plot(x, lm.predict(xReshape), color = 'blue', linewidth = 3)
-    plt.xticks(())
-    plt.yticks(())
-    plt.show()
-    """    
 
 # TODO Finish the ranking difficulty func
 
@@ -210,7 +200,7 @@ def main():
     
     examDifficultyForAllVoc()
 
-    #loadDotCodeToMemory()
+
 
     
 main()
