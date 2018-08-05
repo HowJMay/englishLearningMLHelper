@@ -61,16 +61,19 @@ def calculationFactorProcess():
     saveTxtCalculationFactor(textList)
 
 def loadTxtBestWay():
+    text = []
     for i in range(11):
         fileName = 'personInfoDatasetInOrder' + str(i) + '.txt'
         with open(fileName, 'rb') as f:
-            text = pickle.load(f)
+            tempList = pickle.load(f)
+        for elementList in tempList:
+            text.append(elementList)
     return text
 
 def arrangePersonInfoList(textList):
     personInfoList = []
     for i in range(1, len(textList), 2):
-        personInfoList.append(textList[i/2])
+        personInfoList.append(textList[i])
 
     return personInfoList
     
@@ -79,7 +82,7 @@ def learningSlopeCal(personInfoList):
 
     for personIndex in range(len(personInfoList)):
         personVocHist = personInfoList[personIndex]
-        for vocIndex in range(0, len(personVocHist), 2):
+        for vocIndex in range(0, len(personVocHist) - 1):
             
             formerVocAsDict = personVocHist[vocIndex]
             latterVocAsDict = personVocHist[vocIndex + 1]
@@ -105,7 +108,7 @@ def learningSlopeCal(personInfoList):
                 learningSlopeDict[formerKey].update(valueDict)
             else:
                 # both former and latter key didnt exist in the dict
-                preSlope = learningSlopeDict[formerKey].pop(latterKey)
+                preSlope = learningSlopeDict[formerKey].pop(latterKey)['slope']
                 curSlope = int(latterValue['correct']) /int(latterValue['total'])  - int(formerValue['correct']) /int(formerValue['total']) 
 
                 slope = (preSlope + curSlope) / 2
@@ -123,7 +126,7 @@ def calculationBestWayProcess():
     bestWay.bestWay_Alorithm(learningSlopeDict)
 
 def main():
-    calculationFactorProcess()
+    calculationBestWayProcess()
 
 
 
